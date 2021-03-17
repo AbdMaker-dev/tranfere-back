@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Depot;
+use App\Entity\Transaction;
 use App\Repository\CompteRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\TransactionRepository;
@@ -33,19 +34,185 @@ class TransactionController extends AbstractController
        if ($this->getUser()->getAgence()->getCompte()->getMontant() < 5000 || $this->getUser()->getAgence()->getCompte()->getMontant() < $data['montant']) {
             return $this->json(['message' => 'Vous n \'avez assez d\'argent sur votre compte'], 401);
        }
-       
+        $data['montant'] = \floatval($data['montant']);
         $transactions = $serializerInterface->denormalize($data, "App\Entity\Transaction");
 
         $restMontant = $this->getUser()->getAgence()->getCompte()->getMontant() - $transactions->getMontant();
         $this->getUser()->getAgence()->getCompte()->setMontant($restMontant);
         
+       
         $transactions->initialise($this->getUser());
         
         $manager->persist($transactions);
         $manager->flush();
+        $this->getUser()->setPassword('');
         return $this->json(['message' => 'Succes', 'data'=>$transactions]);
 
     }
+
+    // -------------------------------------------------Pour recupere les frais de depost
+    /**
+     *  @Route(
+     *  "api/transactions/frais/{montant}",
+     *   name="frais",
+     *   methods={"GET"}
+     * )
+     */
+    public function frais(float $montant)
+    {
+        $transaction = new Transaction();
+        $transaction->setMontant(\floatval($montant));
+        $transaction->calculeFraisTotal();
+        return $this->json(['message' => 'Succes', 'frais'=>$transaction->getFraisTotal()]);
+    }
+
+    // -------------------------------------------------Pour recupere les frais de depost
+    /**
+     *  @Route(
+     *  "api/transactions/transaction/{code}",
+     *   name="transe",
+     *   methods={"GET"}
+     * )
+     */
+    public function getTransaction(String $code, TransactionRepository $repo)
+    {
+       
+        $transaction = $repo->findOneByCodeTransaction($code);
+        // return $this->json(['message' => 'Succes', 'data'=>'oki']);
+        return $this->json(['message' => 'Succes', 'data'=>$transaction]);
+    }
+
+
+    /**
+     *  @Route(
+     *  "api/transactions/annuller/{code}",
+     *   name="anunullation",
+     *   methods={"GET"}
+     * )
+     */  
+    public function annullTransaction(String $code, TransactionRepository $repo, EntityManagerInterface $em)
+    {
+        $transaction = $repo->findOneByCodeTransaction($code);
+
+        if (!$transaction) {
+            return $this->json(['message' => 'Succes', 'msg'=>"Code invalide"]);
+        }
+        $em->remove($transaction);
+        $em->flush();
+        // return $this->json(['message' => 'Succes', 'data'=>'oki']);
+        return $this->json(['message' => 'Succes', 'data'=>"sucess"]);
+    }
+
+
+    // -------------------------------------------------Pour recupere les frais de depost
+    /**
+     *  @Route(
+     *  "api/transactions/user",
+     *   name="mesTransaction",
+     *   methods={"GET"}
+     * )
+     */
+    public function getuserTransaction(TransactionRepository $repo)
+    {
+        if (!$this->getUser() || $this->getUser()->getAgence() === null) {
+            return $this->json(['message' => 'Accès non autorisé'], 403);
+        }
+        $alltransactions = $repo->findAll();
+        $user_transactions= [];
+        foreach ($alltransactions as $value) {
+            if ($value->getUserDepot() == $this->getUser() || $value->getUserRetrait() == $this->getUser()) {
+                $user_transactions[] = $value;
+            }
+        }
+        // return $this->json(['message' => 'Succes', 'data'=>'oki']);
+        return $this->json(['message' => 'Succes', 'data'=>$user_transactions]);
+    }
+
+        /**
+     *  @Route(
+     *  "api/transactions/encoure",
+     *   name="mesTransaction",
+     *   methods={"GET"}
+     * )
+     */
+    public function getuserTransactionencoure(TransactionRepository $repo)
+    {
+        if (!$this->getUser() || $this->getUser()->getAgence() === null) {
+            return $this->json(['message' => 'Accès non autorisé'], 403);
+        }
+        $alltransactions = $repo->findAll();
+        $user_transactions= [];
+        foreach ($alltransactions as $value) {
+            if ($value->getDateRetrait == null) {
+                if ($value->getUserDepot() == $this->getUser() || $value->getUserRetrait() == $this->getUser()) {
+                    $user_transactions[] = $value;
+                }
+            }
+        }
+        // return $this->json(['message' => 'Succes', 'data'=>'oki']);
+        return $this->json(['message' => 'Succes', 'data'=>$user_transactions]);
+    }
+
+    // -------------------------------------------------Pour recupere les frais de depost
+    /**
+     *  @Route(
+     *  "api/transactions/agence",
+     *   name="agenceTransaction",
+     *   methods={"GET"}
+     * )
+     */
+    public function getAllAgenceTransaction(TransactionRepository $repo)
+    {
+        if (!$this->getUser() || $this->getUser()->getAgence() === null) {
+            return $this->json(['message' => 'Accès non autorisé'], 403);
+        }
+        
+        $alltransactions = $repo->findAll();
+        
+        $user_agence = $this->getUser()->getAgence()->getUsers()->toArray(); 
+
+        // return $this->json(['message' => 'Succes', 'data'=>$user_agence]);
+
+        $user_transactions= [];
+        foreach ($alltransactions as $value) {
+            if (\in_array($value->getUserDepot(), $user_agence) || \in_array($value->getUserRetrait(), $user_agence)) {
+                // $value->setDateDepot($value->getDateDepot()->format('d-m-Y'));
+                $user_transactions[] = $value;
+            }
+        }
+        // return $this->json(['message' => 'Succes', 'data'=>'oki']);
+        return $this->json(['message' => 'Succes', 'data'=>$user_transactions]);
+    }
+
+    /**
+     *  @Route(
+     *  "api/commissions",
+     *   name="commission",
+     *   methods={"GET"}
+     * )
+     */
+    public function getAllCommission(TransactionRepository $repo)
+    {
+        if (!$this->getUser() || $this->getUser()->getAgence() === null) {
+            return $this->json(['message' => 'Accès non autorisé'], 403);
+        }
+        
+        $alltransactions = $repo->findAll();
+        
+        $user_agence = $this->getUser()->getAgence()->getUsers()->toArray(); 
+        $commissions= [];
+        foreach ($alltransactions as $value) {
+            if (\in_array($value->getUserDepot(), $user_agence)) {
+                // $value->setDateDepot($value->getDateDepot()->format('d-m-Y'));
+                $commissions[] = ["date"=>$value->getDateDepot(), "type"=> "depot", "montant" => $value->getFraisEnvoi(),];
+            }else if(\in_array($value->getUserRetrait(), $user_agence)){
+                $commissions[] = ["date"=>$value->getDateDepot(), "type"=> "retrait", "montant" => $value->getFraisRetrait()];
+            }
+        }
+        return $this->json(['message' => 'Succes', 'data'=>$commissions]);
+    }
+
+
 
     // -------------------------------------------------Pour le retrait
      /**
@@ -78,6 +245,7 @@ class TransactionController extends AbstractController
     
         $this->getUser()->getAgence()->getCompte()->setMontant($restMontant);
         $transactions->setDateRetrait(new \DateTime());
+        $this->getUser()->setPassword(null);
         $transactions->setUserRetrait($this->getUser());
         
         $manager->flush();
@@ -85,7 +253,6 @@ class TransactionController extends AbstractController
 
         
     }
-
 
     // ----------------------------------------Pour le rechargement d'un compte d'une Agence
      /**
@@ -116,7 +283,7 @@ class TransactionController extends AbstractController
         return $this->json(['message' => 'Succes', 'data'=>$compte]);
     } 
 
-        // calcul des parts
+    // calcul des parts
     public function calculPart($pourcent, $montant)
     {
             return ($pourcent*$montant)/100;
@@ -133,6 +300,6 @@ class TransactionController extends AbstractController
             }
             return $chaineAleatoire;
     }
-   
-    
+
+
 }

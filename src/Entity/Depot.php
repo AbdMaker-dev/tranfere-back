@@ -2,8 +2,9 @@
 
 namespace App\Entity;
 
-use App\Repository\DepotRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\DepotRepository;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Asset;
 
 /**
@@ -16,23 +17,27 @@ class Depot
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="date")
      * @Asset\NotBlank(message="Veuillez remplir ce champs date depot")
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $dateDepot;
 
     /**
      * @ORM\Column(type="float")
      * @Asset\NotBlank(message="Veuillez remplir ce champs montant")
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $montantDepot;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="depots")
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $userDepot;
 

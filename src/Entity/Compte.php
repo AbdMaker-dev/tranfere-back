@@ -35,27 +35,27 @@ class Compte
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
-     * @Groups({"compte:read","transaction:read"})
+     * @Groups({"compte:read","transaction:read", "user:read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255, unique=true)
      * @Asset\NotBlank(message="Veuillez remplir ce champs")
-     * @Groups({"compte:write","compte:read","transaction:read"})
+     * @Groups({"compte:write","compte:read","transaction:read", "user:read"})
      */
     private $numeroCompte = "val";
 
     /**
      * @ORM\Column(type="float", precision=10, scale=0)
      * @Asset\NotBlank(message="Veuillez remplir ce champs")
-     * @Groups({"compte:write","compte:read"})
+     * @Groups({"compte:write","compte:read","user:read"})
      */
     private $montant = 700000.00;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Groups({"compte:write","compte:read"})
+     * @Groups({"compte:write","compte:read", "user:read"})
      * 
      */
     private $statut = false;
@@ -69,6 +69,7 @@ class Compte
 
     /**
      * @ORM\OneToMany(targetEntity=Depot::class, mappedBy="compte", cascade={"persist", "remove"})
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $depots;
 

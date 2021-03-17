@@ -41,31 +41,31 @@ class Agence
     /**
      * @ORM\Column(type="string", length=255, unique=true)
      * @Asset\NotBlank(message="Veuillez remplir ce champs")
-     * @Groups({"compte:write","compte:read","transaction:read"})
+     * @Groups({"compte:write","compte:read","transaction:read", "user:read"})
      */
     private $nomAgence;
 
     /**
      * @ORM\Column(type="float", precision=10, scale=0, nullable=true)
-     * @Groups({"compte:write","compte:read"})
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $latittude;
 
     /**
      * @ORM\Column(type="float", precision=10, scale=0, nullable=true)
-     * @Groups({"compte:write","compte:read"})
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $longitude;
 
     /**
      * @ORM\Column(type="boolean")
-     * @Groups({"compte:write","compte:read"})
+     * @Groups({"compte:write","compte:read", "user:read"})
      */
     private $statut = false;
 
     /**
      * @ORM\OneToOne(targetEntity=Compte::class, inversedBy="agence", cascade={"persist", "remove"})
-     * @Groups({"transaction:read"})
+     * @Groups({"transaction:read", "user:read"})
      */
     private $compte;
 

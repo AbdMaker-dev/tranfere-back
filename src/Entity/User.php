@@ -114,7 +114,7 @@ class User implements UserInterface
     private $statut = false;
 
     /**
-     * @ORM\ManyToOne(targetEntity=Profil::class, inversedBy="users")
+     * @ORM\ManyToOne(targetEntity=Profil::class, inversedBy="users", cascade={"persist"})
      * @ORM\JoinColumn(nullable=false)
      * @Asset\NotBlank(message="Veuillez remplir ce champs")
      * @Groups({"user:read","compte:write","compte:read","transaction:read"})
@@ -123,17 +123,19 @@ class User implements UserInterface
 
     /**
      * @ORM\ManyToOne(targetEntity=Agence::class, inversedBy="users")
-     * @Groups({"transaction:read"})
+     * @Groups({"transaction:read", "user:read"})
      */
     private $agence;
 
     /**
      * @ORM\OneToMany(targetEntity=Transaction::class, mappedBy="userDepot")
+     * 
      */
     private $transactions;
 
     /**
      * @ORM\OneToMany(targetEntity=Depot::class, mappedBy="userDepot")
+     * 
      */
     private $depots;
 
