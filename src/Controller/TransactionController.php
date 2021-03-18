@@ -114,9 +114,13 @@ class TransactionController extends AbstractController
      */
     public function getuserTransaction(TransactionRepository $repo)
     {
+        
         if (!$this->getUser() || $this->getUser()->getAgence() === null) {
             return $this->json(['message' => 'Accès non autorisé'], 403);
         }
+
+        
+
         $alltransactions = $repo->findAll();
         $user_transactions= [];
         foreach ($alltransactions as $value) {
@@ -128,10 +132,10 @@ class TransactionController extends AbstractController
         return $this->json(['message' => 'Succes', 'data'=>$user_transactions]);
     }
 
-        /**
+    /**
      *  @Route(
      *  "api/transactions/encoure",
-     *   name="mesTransaction",
+     *   name="mesTransactionencoure",
      *   methods={"GET"}
      * )
      */
@@ -143,7 +147,7 @@ class TransactionController extends AbstractController
         $alltransactions = $repo->findAll();
         $user_transactions= [];
         foreach ($alltransactions as $value) {
-            if ($value->getDateRetrait == null) {
+            if ($value->getDateRetrait() == null) {
                 if ($value->getUserDepot() == $this->getUser() || $value->getUserRetrait() == $this->getUser()) {
                     $user_transactions[] = $value;
                 }
@@ -301,5 +305,10 @@ class TransactionController extends AbstractController
             return $chaineAleatoire;
     }
 
+
+    public function sendSms(){
+        $sid ="ACfacc75db86af1d3c2a2aa38ecdbe3697";
+        $token = "8c47f7d261ae01b7d3552d480551d7db";
+    }
 
 }
