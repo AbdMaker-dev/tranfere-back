@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Depot;
+use Twilio\Rest\Client;
 use App\Entity\Transaction;
 use App\Repository\CompteRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -46,7 +47,9 @@ class TransactionController extends AbstractController
         $manager->persist($transactions);
         $manager->flush();
         $this->getUser()->setPassword('');
-        return $this->json(['message' => 'Succes', 'data'=>$transactions]);
+        $msg = "Vous avez reçu un transfert de " . $transactions->getMontant() . "F cfa du " . $transactions->getClientDepot()->getPhone() . "! A retirer dans une agence Facile-Money!Lol";
+        $res = $this->sendSms($msg, $transactions->getClientRetrait()->getPhone());
+        return $this->json(['message' => 'Succes', 'data'=> $msg]);
 
     }
 
@@ -306,9 +309,27 @@ class TransactionController extends AbstractController
     }
 
 
-    public function sendSms(){
+    public function sendSms($msg, $numclient)
+    {
         $sid ="ACfacc75db86af1d3c2a2aa38ecdbe3697";
         $token = "8c47f7d261ae01b7d3552d480551d7db";
+        $num1= "(240) 712-5111 ";
+        $my_num = "+12407125111";
+        
+        $client = new Client($sid, $token);
+        
+        $message = $client->messages->create(
+            '+221'.$numclient, // Text this number
+            [
+              'from' => $my_num, // From a valid Twilio number
+              'body' => $msg
+            ]
+          );
+        
+          if ($message->sid) {
+             return "oki";
+          }
+        return "non oki";
     }
 
 }
